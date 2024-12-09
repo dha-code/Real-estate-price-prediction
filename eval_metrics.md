@@ -97,3 +97,7 @@ Time taken for the model training: 5.638 seconds.
       'algorithm': ['auto', 'ball_tree', 'kd_tree', 'brute'],
        'metric': ['minkowski','euclidean','manhattan'],
    }
+   ```
+
+
+About the model [KNNRegression](https://docs.google.com/presentation/d/15Yt92dLl2aA6XxnksoBJX_6Kiz0GpdbVQN5I1_e4id8/edit?usp=sharing)
