@@ -7,9 +7,7 @@ from sklearn.inspection import permutation_importance
 from sklearn.utils import resample
 from sklearn.model_selection import train_test_split, RandomizedSearchCV, KFold, cross_val_score 
 from sklearn.metrics import mean_squared_error, r2_score, mean_absolute_error, mean_absolute_percentage_error
-from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
-from sklearn import metrics
 from scipy.stats import randint
 import shap
 
@@ -46,11 +44,10 @@ class RealEstateKNN:
         Split the dataset into training and test set.
         """
         self.X_train, self.X_test, self.y_train, self.y_test = train_test_split(
-            X, y, test_size=test_size
-        )
+            X, y, test_size=test_size, random_state=9)
         self.property_type = self.X_test["Property type"]
-        self.scale_features(self.X_train, self.X_test)
         self.feature_names = X.columns if isinstance(X, pd.DataFrame) else None
+        self.scale_features(self.X_train, self.X_test)        
 
     def scale_features(self, X_train, X_test):
         """
@@ -82,7 +79,6 @@ class RealEstateKNN:
         y_pred_train = self.predict(self.X_train)
         self.calculate_metrics(self.y_train, y_pred_train, 'Training set')
         self.calculate_metrics(self.y_test, self.y_pred_test, 'Test set')
-        print(self.metrics)
 
     def calculate_smape(self, actual, pred):
         numerator = np.abs(actual - pred)
@@ -99,6 +95,7 @@ class RealEstateKNN:
     def generate_graphs(self):
         self.plot_ideal_fit()
         self.plot_error_rate()
+        #self.plot_feature_importance()
 
     def plot_ideal_fit(self):
         """
@@ -140,3 +137,26 @@ class RealEstateKNN:
         plt.title('Error by Price Range')
         plt.savefig('./figures/Error_rates.png')
         plt.clf()
+
+    def plot_feature_importance(self):
+        results = permutation_importance(self.model, self.X_train, self.y_train, scoring='neg_mean_squared_error')
+        importances = results.importances_mean  # Mean importance across shuffles
+        std = results.importances_std  # Standard deviation
+        feature_importance = pd.DataFrame({
+            'Feature': self.feature_names,
+            'Importance': importances,
+            'StdDev': std
+        })
+
+        #Sort by importance
+        feature_importance = feature_importance.sort_values(by='Importance', ascending=False)
+        plt.figure(figsize=(10, 6))
+        sns.barplot(x='Importance', y='Feature', data=feature_importance, errorbar=None)
+        plt.errorbar(feature_importance['Importance'], feature_importance['Feature'], xerr=feature_importance['StdDev'], fmt='o', color='red', label='Std Dev')
+        plt.title('Feature Importance from Permutation Importance')
+        plt.xlabel('Mean Importance')
+        plt.ylabel('Features')
+        plt.legend()
+        plt.tight_layout()
+        plt.savefig('./figures/Feature_importance.png')
+        plt.clf()       
